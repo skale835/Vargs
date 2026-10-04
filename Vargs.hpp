@@ -29,11 +29,11 @@
 
   class Vargs {
     private:
-      std::vector<std::string> vec; 
-      std::size_t i; 
-        /* The fields are simply a vector<string> and an index. The 
-           index is a simple number rather than the iterable-pointer-to-
-           element--thingy in std::vector. */
+      std::vector<std::string> args;
+      std::size_t sel;
+        /* The fields are simply a vector<string> and a selector. The 
+           selector is zero for no selection, and n in selecting the    
+           nth element. Operations modify selector as described. */
 
     public:
       Vargs();
@@ -41,144 +41,179 @@
         /* Creating Vargs without arguments results in an empty 
            object. Check each function for empty-vector behavior.*/
 
+      // QUERIES
       std::size_t size();
         /* Return size */
-      std::size_t inpos();
-        /* Return position of index */
-
-      std::string arg(std::size_t ind);
+      std::string arg(std::size_t pos);
         /* Return argument at argued position */
-
-      void advin();
-        /* Advance index. Can throw out_of_range. */
-      void retin();
-        /* Retard index. Can throw out_of_range. */
-      void movin(std::size_t ind);
-        /* Move index to argued value. */
-      std::string getin();
-        /* Return indicated argument */    
-      void setin(std::string theArg);
-        /* Set indicated argument to theArg */
-
       std::vector<std::string> getall();
         /* Return vector<string> of the arguments */
 
+      // SELECTOR METHODS
+      void sadv();
+        /* Advance selector. Throw error if out of range. */
+      void sret();
+        /* Retard selector.  Throw error if out of range. */
+      void smov(std::size_t pos);
+        /* Move selector to argued value. Throw error if out of range */
+      void sclr();
+        /* Clear (or reset) selector, by setting to zero. */
+      std::size_t sget();
+        /* Return selector value */    
+
+      void setsel(std::string theArg);
+        /* Set selected element to theArg */
+      std::string getsel();
+        /* Get selected element */
+
+      // DIRECT OPERATIONS
+      void insel(std::string theArg);
+        /* Insert theArg, such that sel's current value will point to it. 
+           Does nothing if sel = 0 */
+      std::string delsel();               
+        /* Delete selected argument. sel = 0 throws error. sel resets with
+           delete.*/
+
+      // STACK-STYLE OPERATIONS
       void push(std::string theArg);
-        /* Add theArg to end */
+        /* Add theArg to end. Selector remains. */           
       std::string pop(); 
-        /* Remove and return last element */
+        /* Remove and return last element. Decrement selector if selected 
+           element was popped. Throw error if empty. */
       void fpush(std::string theArg); 
-        /* Add theArg to start */
+        /* Add theArg to start. Selector increments if > 0. */
       std::string fpop();
-        /* Remove and return first element */
+        /* Remove and return first element. Selector decrements if > 0*/
   };
 // =========== METHODS =========================================== //
 // ----------- CONSTRUCTOR --------------------------------------- //
   Vargs::Vargs() {
-    this->i = 0;
+    this->sel = 0;
   }
 
-  Vargs::Vargs(int argc, char* argv[]) : i(0) {
+  Vargs::Vargs(int argc, char* argv[]) : sel(0) {
     for (int a = 1; a < argc; a++) {
-      vec.push_back(argv[a]);
+      args.push_back(argv[a]);
     }
   }
 
-// ----------- DESTRUCTOR ---------------------------------------- //
+// ----------- DESTRUCTOR ----------------------------------------- //
      /* None needed */
 
-// ---------- .size() -------------------------------------------- //
-  std::size_t Vargs::size() {           /* Never fail */ 
-    return this->vec.size();
+// ----------- .size() -------------------------------------------- // TEST
+  std::size_t Vargs::size() {
+    return this->args.size();
   }
 
-// ---------- .inpos() ------------------------------------------- //
-  std::size_t Vargs::inpos() {          /* Never fail */
-    return this->i;
-  }
-
-
-// ---------- .arg() --------------------------------------------- //
-  std::string Vargs::arg(std::size_t ind) { 
-    if (ind  >= this->vec.size()) { 
-      throw std::out_of_range("Vargs::arg(): index out of range");
+// ----------- .arg() --------------------------------------------- // TEST
+  std::string Vargs::arg(std::size_t pos) { 
+    if (pos == 0 || pos > this->args.size()) { 
+      throw std::out_of_range("Vargs::arg(): pos out of range");
     }
-    return this->vec.at(ind);
+    return this->args.at(pos-1);
   }
 
-// ---------- .advin() ------------------------------------------- //
-  void Vargs::advin() {
-    if (i + 1 >= this->vec.size()) {
-      throw std::out_of_range("Vargs::advin(): no further args");
-    }
-    i++;
-  }
-
-// ---------- .retin() ------------------------------------------- //
-  void Vargs::retin() {
-    if (i == 0) { 
-      throw std::out_of_range("Vargs::retin(): no preceding args");
-    }
-    i--;
-  }
-
-// ---------- .movin() ------------------------------------------- //
-  void Vargs::movin(std::size_t ind) {
-    if (ind + 1 >= this->vec.size()) { 
-      throw std::out_of_range("Vargs::movin(): index out of range");
-    }
-    this->i = ind;
-  }
-
-// ----------- getin() ------------------------------------------- //
-  std::string Vargs::getin() {            /* NOTE1 => never fail */
-
-    return this->vec.at(this->i); 
-  }
-
-// ----------- setin() ------------------------------------------- //
-  void Vargs::setin(std::string theArg) { /* NOTE1 => never fail */
-    this->vec.at(this->i) = theArg;
-  }
-
-// ----------- getall() ------------------------------------------ //
+// ----------- getall() ------------------------------------------ // TEST
   std::vector<std::string> Vargs::getall() {
-    return this->vec;
+    return this->args;
   }
 
-// ----------- push() -------------------------------------------- // 
-  void Vargs::push(std::string theArg) {
-    this->vec.push_back(theArg);
-  }
-
-// ----------- pop() --------------------------------------------- //
-  std::string Vargs::pop() {
-      /* pop_back() undefined for empty vector. */
-    if (this->vec.size() == 0) {
-      throw(std::out_of_range("Vargs::pop(): Empty vargs"));
+// ----------- sadv() ------------------------------------------- // TEST
+  void Vargs::sadv() { 
+    if(sel == args.size()) {
+      throw std::out_of_range("Vargs::sadv(): selector at end");
     }
-    std::string toReturn = this->vec.at(vec.size()-1);
+    sel++;
+  }
 
-    this->vec.pop_back();
+// ----------- sret() ------------------------------------------- // TEST
+  void Vargs::sret() {
+    if(sel <= 1) {
+      throw std::out_of_range("Vargs::sret(): selector at start");
+    }
+    sel--;
+  }
+
+// ----------- smov() ------------------------------------------- // TEST
+  void Vargs::smov(std::size_t pos) {
+    if(pos > args.size()) {
+      throw std::out_of_range("Vargs::smov(): pos past end");
+    }
+    sel = pos;
+  }
+
+// ----------- sclr() -------------------------------------------- // TEST
+  void Vargs::sclr() {
+    sel = 0;
+  }
+
+// ----------- sget() -------------------------------------------- // TEST
+  std::size_t Vargs::sget() {
+    return sel;
+  }
+
+// ----------- setsel()------------------------------------------ // TEST
+  void Vargs::setsel(std::string theArg) {
+    args.at(sel-1) = theArg;
+  }
+
+// ----------- getsel()------------------------------------------ // TEST
+  std::string Vargs::getsel() {
+    return args.at(sel-1);
+  }
+
+// ----------- insel() ------------------------------------------ // TEST
+  void Vargs::insel(std::string theArg) {
+    if (!sel) return;
+    args.insert(args.begin()+sel-1,theArg);
+  }
+
+// ----------- delsel() ------------------------------------------ // TEST
+  std::string Vargs::delsel() {
+    std::string toReturn = this->getsel();
+    args.erase(args.begin()+sel-1);
+    this->sclr();
     return toReturn;
   }
 
-// ----------- fpush() ------------------------------------------- //
+// ----------- push() -------------------------------------------- // TEST 
+  void Vargs::push(std::string theArg) {
+    args.push_back(theArg);
+  }
+
+// ----------- pop() --------------------------------------------- // TEST
+  std::string Vargs::pop() {
+      /* pop_back() undefined for empty vector. */
+    if (this->args.size() == 0) {
+      throw(std::out_of_range("Vargs::pop(): Empty vargs"));
+    }
+    std::string toReturn = this->args.at(args.size()-1);
+
+    if (this->sel == args.size()) { /* Decrement to avoid OOR */     
+      sel--;
+    }
+
+    args.pop_back();
+    return toReturn;
+  }
+
+// ----------- fpush() ------------------------------------------- // TEST
   void Vargs::fpush(std::string theArg) {
-    this->vec.insert(this->vec.begin(),theArg);
+    args.insert(args.begin(),theArg);
+    if (sel) sel++;
   }
 
 
-// ----------- fpop() -------------------------------------------- //
+// ----------- fpop() -------------------------------------------- // TEST
   std::string Vargs::fpop() {
-      /* pop_back() undefined for empty vector. */
-    if (this->vec.size() == 0) {
+    if (args.size() == 0) {
       throw(std::out_of_range("Vargs::fpop() Empty vargs"));
     }
-    std::string toReturn = this->vec.at(0);
-    this->vec.erase(this->vec.begin());
+    std::string toReturn = args.at(0);
+    if (sel) sel--;
+    args.erase(args.begin());
     return toReturn;
   }
 
   #endif // Vargs_H
-//+++++++++++ EOF ++++++++++++++++++++++++++++++++++++++++++++++++ //
+//+++++++++++ EOF ++++++++++++++++++++++++++++++++++++++++++++++++ // TEST
