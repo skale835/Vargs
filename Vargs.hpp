@@ -1,6 +1,8 @@
 /*_Vargs.hpp________________________________________________________ 
 |  Class for commandline arguments                                  |
 |                                                                   |
+|  Copyright (c) 2026 Sameer Kale                                   |
+|  SPDX-License-Identifier: MIT                                     |
 |__________________________________________________________________*/
 // =========== Headers =========================================== //
   #ifndef VARGS_H

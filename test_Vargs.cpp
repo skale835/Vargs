@@ -1,9 +1,12 @@
 /* test_Vargs.cpp___________________________________________________
-|  TESt FILE FOR VARGS CLASS                                      |
-|  Tests Vargs as a command-line argument container, including    |
-|  actual CLI input, synthetic argv input, normal operations,     |
-|  boundary conditions, and expected exceptions.                  |
-|_________________________________________________________________*/
+|  TESt FILE FOR VARGS CLASS                                        |
+|  Tests Vargs as a command-line argument container, including      |
+|  actual CLI input, synthetic argv input, normal operations,       |
+|  boundary conditions, and expected exceptions.                    |
+|                                                                   |
+|  Copyright (c) 2026 Sameer Kale                                   |
+|  SPDX-License-Identifier: MIT                                     |
+|__________________________________________________________________*/
 // =========== HEADERS =========================================== //
   #include <iostream>
   #include <string>
