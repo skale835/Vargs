@@ -55,7 +55,7 @@
 
   void showVargs(const string& name, Vargs& vargs) {
     cout << name << ": size=" << vargs.size()
-         << ", pos=" << vargs.pos() << ", args={";
+         << ", inpos=" << vargs.inpos() << ", args={";
 
     vector<string> args = vargs.getall();
     for (size_t a = 0; a < args.size(); a++) {
@@ -110,8 +110,8 @@
     showVargs("emptyVargs", emptyVargs);
     showResult("Constructor default ." + CYN("size()") + " == 0",
                emptyVargs.size() == 0);
-    showResult("Constructor default ." + CYN("pos()") + " == 0",
-               emptyVargs.pos() == 0);
+    showResult("Constructor default ." + CYN("inpos()") + " == 0",
+               emptyVargs.inpos() == 0);
 
     char arg0[] = "croll";   /* Some made-up command */
     char arg1[] = "-b";
@@ -150,38 +150,38 @@
     heading("NAVIGATION: getin(), advin(), retin()");
 
     Vargs navVargs(testArgc, testArgv);
-    showResult("initial " + CYN("pos()") + " == 0", navVargs.pos() == 0);
+    showResult("initial " + CYN("inpos()")+ " == 0", navVargs.inpos() == 0);
     showResult("initial " + CYN("getin()"), navVargs.getin() == "-b");
 
     navVargs.advin();
     showResult(CYN("advin()") + " moves 0 -> 1",
-               navVargs.pos() == 1 &&
+               navVargs.inpos() == 1 &&
                navVargs.getin() == "source/main.cpp");
 
     navVargs.advin();
     navVargs.advin();
     showResult("repeated " + CYN("advin()") + " reaches last argument",
-               navVargs.pos() == 3 && navVargs.getin() == "-xyz");
+               navVargs.inpos() == 3 && navVargs.getin() == "-xyz");
 
     expectOutOfRange(CYN("advin()") + " past last argument",
                      [&]() { navVargs.advin(); });
     showResult("failed " + CYN("advin()") + " leaves position unchanged",
-               navVargs.pos() == 3);
+               navVargs.inpos() == 3);
 
     navVargs.retin();
     showResult(CYN("retin()") + " moves 3 -> 2",
-               navVargs.pos() == 2 &&
+               navVargs.inpos() == 2 &&
                navVargs.getin() == "name=hello world");
 
     navVargs.retin();
     navVargs.retin();
     showResult("repeated " + CYN("retin()") + " returns to first argument",
-               navVargs.pos() == 0 && navVargs.getin() == "-b");
+               navVargs.inpos() == 0 && navVargs.getin() == "-b");
 
     expectOutOfRange(CYN("retin()") + " before first argument",
                      [&]() { navVargs.retin(); });
-    showResult("failed " + CYN("retin()") + " leaves position unchanged",
-               navVargs.pos() == 0);
+    showResult("failed " + CYN("retin()") + " leaves inposition unchanged",
+               navVargs.inpos() == 0);
 
     expectOutOfRange(CYN("getin()") + " on empty Vargs",
                      [&]() { emptyVargs.getin(); });
@@ -193,17 +193,14 @@
     Vargs single;
     single.push("only");
     showVargs("single", single);
-    showResult("single argument is current at pos 0",
+    showResult("single argument is current at inpos 0",
                single.size() == 1 &&
-               single.pos() == 0 &&
+               single.inpos() == 0 &&
                single.getin() == "only");
     expectOutOfRange("single-element " + CYN("advin()"),
                      [&]() { single.advin(); });
     expectOutOfRange("single-element " + CYN("retin()"),
                      [&]() { single.retin(); });
-
-
-    heading("MODIFICATION: setin()");
 
     Vargs setVargs(testArgc, testArgv);
     setVargs.setin("changed-first-argument");
@@ -251,8 +248,9 @@
                backVargs.arg(0) == "one" &&
                backVargs.arg(2) == "three");
 
+    string popped = "";
     try {
-      string popped = backVargs.pop();
+      popped = backVargs.pop();
       showResult(CYN("pop()") + " returns and removes last argument",
                  popped == "three" &&
                  backVargs.size() == 2 &&
@@ -261,6 +259,10 @@
     catch (const std::exception& err) {
       showResult(CYN("pop()") + " returns and removes last argument", false);
       cout << "       unexpected exception: " << err.what() << '\n';
+      cout << "\t\"popped\": " << popped << endl;
+      cout << "\tbackVargs.size()\" : " << backVargs.size() << endl;
+      cout << "\tbackVargs.arg(0)\" : " << backVargs.arg(0) << endl;
+      cout << "\tbackVargs.arg(1)\" : " << backVargs.arg(1) << endl;
     }
 
     Vargs emptyBack;
