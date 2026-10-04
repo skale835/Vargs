@@ -61,12 +61,16 @@
         /* Set indicated argument to theArg */
 
       std::vector<std::string> getall();
-        /* Return vector<string> arguments */
+        /* Return vector<string> of the arguments */
 
       void push(std::string theArg);
+        /* Add theArg to end */
       std::string pop(); 
+        /* Remove and return last element */
       void fpush(std::string theArg); 
-      std::string fpop(); 
+        /* Add theArg to start */
+      std::string fpop();
+        /* Remove and return first element */
   };
 // =========== METHODS =========================================== //
 // ----------- CONSTRUCTOR --------------------------------------- //
@@ -96,6 +100,9 @@
 
 // ---------- .arg() --------------------------------------------- //
   std::string Vargs::arg(std::size_t ind) { 
+    if (ind  >= this->vec.size()) { 
+      throw std::out_of_range("Vargs::arg(): index out of range");
+    }
     return this->vec.at(ind);
   }
 

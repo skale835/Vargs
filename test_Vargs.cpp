@@ -134,7 +134,8 @@
                fullVargs.arg(1) == "source/main.cpp" &&
                fullVargs.arg(2) == "name=hello world" &&
                fullVargs.arg(3) == "-xyz");
-
+    expectOutOfRange(CYN("arg()") + " beyond end",
+                     [&] () {fullVargs.arg(4);});
 
 
     heading("INDEXED ACCESS: arg()");
