@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ "$#" -eq 0 ]; then
+    echo "gitpost: Please provide message."
+    exit 1
+fi
+
+git add -A
+git commit -m "$*"
+git push
+git log -1 --oneline
