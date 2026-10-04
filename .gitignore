@@ -1,0 +1,8 @@
+# Swap files
+*.swp
+
+# Executables
+test_Vargs
+
+# Windows metadata
+*:Zone.Identifier
