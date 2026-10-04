@@ -87,11 +87,11 @@
   };
 // =========== METHODS =========================================== //
 // ----------- CONSTRUCTOR --------------------------------------- //
-  Vargs::Vargs() {
+  inline Vargs::Vargs() {
     this->sel = 0;
   }
 
-  Vargs::Vargs(int argc, char* argv[]) : sel(0) {
+  inline Vargs::Vargs(int argc, char* argv[]) : sel(0) {
     for (int a = 1; a < argc; a++) {
       args.push_back(argv[a]);
     }
@@ -101,12 +101,12 @@
      /* None needed */
 
 // ----------- .size() -------------------------------------------- // TEST
-  std::size_t Vargs::size() {
+  inline std::size_t Vargs::size() {
     return this->args.size();
   }
 
 // ----------- .arg() --------------------------------------------- // TEST
-  std::string Vargs::arg(std::size_t pos) { 
+  inline std::string Vargs::arg(std::size_t pos) { 
     if (pos == 0 || pos > this->args.size()) { 
       throw std::out_of_range("Vargs::arg(): pos out of range");
     }
@@ -114,12 +114,12 @@
   }
 
 // ----------- getall() ------------------------------------------ // TEST
-  std::vector<std::string> Vargs::getall() {
+  inline std::vector<std::string> Vargs::getall() {
     return this->args;
   }
 
 // ----------- sadv() ------------------------------------------- // TEST
-  void Vargs::sadv() { 
+  inline void Vargs::sadv() { 
     if(sel == args.size()) {
       throw std::out_of_range("Vargs::sadv(): selector at end");
     }
@@ -127,7 +127,7 @@
   }
 
 // ----------- sret() ------------------------------------------- // TEST
-  void Vargs::sret() {
+  inline void Vargs::sret() {
     if(sel <= 1) {
       throw std::out_of_range("Vargs::sret(): selector at start");
     }
@@ -135,7 +135,7 @@
   }
 
 // ----------- smov() ------------------------------------------- // TEST
-  void Vargs::smov(std::size_t pos) {
+  inline void Vargs::smov(std::size_t pos) {
     if(pos > args.size()) {
       throw std::out_of_range("Vargs::smov(): pos past end");
     }
@@ -143,33 +143,33 @@
   }
 
 // ----------- sclr() -------------------------------------------- // TEST
-  void Vargs::sclr() {
+  inline void Vargs::sclr() {
     sel = 0;
   }
 
 // ----------- sget() -------------------------------------------- // TEST
-  std::size_t Vargs::sget() {
+  inline std::size_t Vargs::sget() {
     return sel;
   }
 
 // ----------- setsel()------------------------------------------ // TEST
-  void Vargs::setsel(std::string theArg) {
+  inline void Vargs::setsel(std::string theArg) {
     args.at(sel-1) = theArg;
   }
 
 // ----------- getsel()------------------------------------------ // TEST
-  std::string Vargs::getsel() {
+  inline std::string Vargs::getsel() {
     return args.at(sel-1);
   }
 
 // ----------- insel() ------------------------------------------ // TEST
-  void Vargs::insel(std::string theArg) {
+  inline void Vargs::insel(std::string theArg) {
     if (!sel) return;
     args.insert(args.begin()+sel-1,theArg);
   }
 
 // ----------- delsel() ------------------------------------------ // TEST
-  std::string Vargs::delsel() {
+  inline std::string Vargs::delsel() {
     std::string toReturn = this->getsel();
     args.erase(args.begin()+sel-1);
     this->sclr();
@@ -177,12 +177,12 @@
   }
 
 // ----------- push() -------------------------------------------- // TEST 
-  void Vargs::push(std::string theArg) {
+  inline void Vargs::push(std::string theArg) {
     args.push_back(theArg);
   }
 
 // ----------- pop() --------------------------------------------- // TEST
-  std::string Vargs::pop() {
+  inline std::string Vargs::pop() {
       /* pop_back() undefined for empty vector. */
     if (this->args.size() == 0) {
       throw(std::out_of_range("Vargs::pop(): Empty vargs"));
@@ -198,14 +198,14 @@
   }
 
 // ----------- fpush() ------------------------------------------- // TEST
-  void Vargs::fpush(std::string theArg) {
+  inline void Vargs::fpush(std::string theArg) {
     args.insert(args.begin(),theArg);
     if (sel) sel++;
   }
 
 
 // ----------- fpop() -------------------------------------------- // TEST
-  std::string Vargs::fpop() {
+  inline std::string Vargs::fpop() {
     if (args.size() == 0) {
       throw(std::out_of_range("Vargs::fpop() Empty vargs"));
     }

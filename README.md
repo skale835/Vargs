@@ -25,7 +25,9 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-`Vargs` stores the command-line arguments beginning with `argv[1]`. The called utility that normally would constitute the `argv[0]` term is discarded, so vargs.arg(0) is the first argument.
+`Vargs` stores the command-line arguments beginning with `argv[1]`. The called utility that normally would constitute the `argv[0]` term is discarded.
+
+The selector is zero for "no selection", and for nonzero value n, will select the nth element. So argv[1] becomes the first element inside the vector inside Vargs, and is selected with 1. 
 
 An empty `Vargs` object may also be declared:
 
