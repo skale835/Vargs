@@ -10,119 +10,56 @@
   #include <string>
   #include <vector>
   #include "Vargs.hpp"
+  #include "testutils/testutils.h"
 
   using namespace std;
-
-// =========== DECLARATIONS ====================================== //
-  size_t testsPassed = 0;
-  size_t testsFailed = 0;
-
-  const string TERM_RED      = "\033[31m";
-  const string TERM_YEL_BOLD = "\033[93m";
-  const string TERM_GRN      = "\033[32m";
-  const string TERM_CYN      = "\033[36m";
-  const string TERM_UNC      = "\033[0m";
-
-  #define RED(a) TERM_RED + a + TERM_UNC
-  #define YEL(a) TERM_YEL_BOLD + a + TERM_UNC
-  #define GRN(a) TERM_GRN + a + TERM_UNC
-  #define CYN(a) TERM_CYN + a + TERM_UNC
-
-// =========== UTILITIES ========================================= //
-  void title(const string& text) {
-    cout << YEL(
-      "\n============================================================\n"
-      + text +
-      "\n============================================================\n");
-  }
-
-  void heading(const string& text) {
-    cout <<
-      "\n------------------------------------------------------------\n";
-    cout << YEL(text) << '\n';
-    cout <<
-      "------------------------------------------------------------\n";
-  }
-
-  void showResult(const string& name, bool passed) {
-    cout << (passed ? GRN("[PASS]")
-                    : RED("[FAIL]"))
-         << " " << name << '\n';
-
-    if (passed) testsPassed++;
-    else        testsFailed++;
-  }
-
-  void showVargs(const string& name, Vargs& vargs) {
-    cout << name << ": size=" << vargs.size()
-         << ", sel=" << vargs.sget() << ", args={";
-
-    vector<string> args = vargs.getall();
-
-    for (size_t a = 0; a < args.size(); a++) {
-      if (a != 0) cout << ", ";
-      cout << '"' << args[a] << '"';
-    }
-
-    cout << "}\n";
-  }
-
-  template <typename Function>
-  void expectOutOfRange(const string& name, Function operation) {
-    try {
-      operation();
-      showResult(name + " [expected std::out_of_range]", false);
-    }
-    catch (const std::out_of_range& err) {
-      showResult(name + " [caught std::out_of_range]", true);
-      cout << "       what(): " << err.what() << '\n';
-    }
-    catch (...) {
-      showResult(name + " [wrong exception type]", false);
-    }
-  }
+  using namespace test;
 
 // =========== MAIN ============================================== //
   int main(int argc, char* argv[]) {
-    title("TEST: Vargs class");
+    printTitle("TEST: Vargs class");
 
 // ----------- COMMAND LINE INPUT -------------------------------- //
-    heading("COMMAND LINE INPUT");
+    printHeading("COMMAND LINE INPUT");
 
-    cout << "argc = " << argc << '\n';
+    printVariable("argc", argc);
 
     for (int a = 0; a < argc; a++) {
       cout << "argv[" << a << "] = \"" << argv[a] << "\"\n";
     }
 
     Vargs cliVargs(argc, argv);
-    showVargs("cliVargs", cliVargs);
+    printVariable("cliVargs.size()", cliVargs.size());
+    printVariable("cliVargs.sget()", cliVargs.sget());
+    printArray("cliVargs.getall()", cliVargs.getall());
 
-    showResult("argv[0] excluded from object",
+    printResult("argv[0] excluded from object",
                cliVargs.size() == static_cast<size_t>(argc - 1));
 
     if (argc > 1) {
-      showResult("First CLI argument becomes ." + CYN("arg(1)"),
+      printResult("First CLI argument becomes ." + TU_CYN("arg(1)"),
                  cliVargs.arg(1) == argv[1]);
     }
     else {
-      showResult("No CLI arguments => empty Vargs",
+      printResult("No CLI arguments => empty Vargs",
                  cliVargs.size() == 0);
     }
 
-    showResult("CLI constructor initializes selector to zero",
+    printResult("CLI constructor initializes selector to zero",
                cliVargs.sget() == 0);
 
 // ----------- DEFAULT CONSTRUCTION ------------------------------ //
-    heading("DEFAULT CONSTRUCTION");
+    printHeading("DEFAULT CONSTRUCTION");
 
     Vargs emptyVargs;
-    showVargs("emptyVargs", emptyVargs);
+    printVariable("emptyVargs.size()", emptyVargs.size());
+    printVariable("emptyVargs.sget()", emptyVargs.sget());
+    printArray("emptyVargs.getall()", emptyVargs.getall());
 
-    showResult("Constructor default .size() == 0",
+    printResult("Constructor default .size() == 0",
                emptyVargs.size() == 0);
 
-    showResult("Constructor default ." + CYN("sget()") + " == 0",
+    printResult("Constructor default ." + TU_CYN("sget()") + " == 0",
                emptyVargs.sget() == 0);
 
 // ----------- SYNTHETIC COMMAND LINE ---------------------------- //
@@ -132,171 +69,148 @@
     char arg3[] = "name=hello world";
     char arg4[] = "-xyz";
 
-    char* testArgv[] = {arg0, arg1, arg2, arg3, arg4, nullptr};
+    char* testArgv[] = {arg0, arg1, arg2, arg3, arg4};
     int testArgc = 5;
 
-    cout << "\nSynthetic command line represented as argv[]:\n";
-
-    for (int a = 0; a < testArgc; a++) {
-      cout << "argv[" << a << "] = \""
-           << testArgv[a] << "\"\n";
-    }
+    printNote("Synthetic command line represented as argv[]:");
+    printArray("testArgv", testArgv);
 
     Vargs fullVargs(testArgc, testArgv);
-    showVargs("fullVargs", fullVargs);
+    printVariable("fullVargs.size()", fullVargs.size());
+    printVariable("fullVargs.sget()", fullVargs.sget());
+    printArray("fullVargs.getall()", fullVargs.getall());
 
-    showResult("constructor excludes argv[0]",
+    printResult("constructor excludes argv[0]",
                fullVargs.size() == 4 &&
                fullVargs.arg(1) == "-b");
 
-    showResult("constructor preserves argument strings",
+    printResult("constructor preserves argument strings",
                fullVargs.arg(1) == "-b" &&
                fullVargs.arg(2) == "source/main.cpp" &&
                fullVargs.arg(3) == "name=hello world" &&
                fullVargs.arg(4) == "-xyz");
 
-    showResult("synthetic constructor initializes selector to zero",
+    printResult("synthetic constructor initializes selector to zero",
                fullVargs.sget() == 0);
 
 // ----------- INDEXED ACCESS ------------------------------------ //
-    heading("INDEXED ACCESS: arg()");
+    printHeading("INDEXED ACCESS: arg()");
 
-    showResult(CYN("arg(1)"), fullVargs.arg(1) == "-b");
-    showResult(CYN("arg(last)"),
+    printResult(TU_CYN("arg(1)"), fullVargs.arg(1) == "-b");
+    printResult(TU_CYN("arg(last)"),
                fullVargs.arg(fullVargs.size()) == "-xyz");
-
-    expectOutOfRange(CYN("arg(0)"), [&]() { fullVargs.arg(0); });
-    expectOutOfRange(CYN("arg()") + " one past end",
-                     [&]() { fullVargs.arg(fullVargs.size() + 1); });
-    expectOutOfRange(CYN("arg()") + " on empty Vargs",
-                     [&]() { emptyVargs.arg(1); });
+    EXPECT_NG(fullVargs.arg(0), TU_CYN("arg(0)"), std::out_of_range);
+    EXPECT_NG(fullVargs.arg(fullVargs.size() + 1), TU_CYN("arg()") + " one past end", std::out_of_range);
+    EXPECT_NG(emptyVargs.arg(1), TU_CYN("arg()") + " on empty Vargs", std::out_of_range);
 
 // ----------- SELECTOR VALUE ------------------------------------ //
-    heading("SELECTOR VALUE: sget(), smov(), sclr()");
+    printHeading("SELECTOR VALUE: sget(), smov(), sclr()");
 
     Vargs selVargs(testArgc, testArgv);
 
-    showResult(CYN("sget()") + " initially returns zero",
+    printResult(TU_CYN("sget()") + " initially returns zero",
                selVargs.sget() == 0);
 
     selVargs.smov(1);
-    showResult(CYN("smov(1)") + " selects first argument",
+    printResult(TU_CYN("smov(1)") + " selects first argument",
                selVargs.sget() == 1 &&
                selVargs.getsel() == "-b");
 
     selVargs.smov(3);
-    showResult(CYN("smov(3)") + " selects third argument",
+    printResult(TU_CYN("smov(3)") + " selects third argument",
                selVargs.sget() == 3 &&
                selVargs.getsel() == "name=hello world");
 
     selVargs.smov(selVargs.size());
-    showResult(CYN("smov(size()") + ") selects last argument",
+    printResult(TU_CYN("smov(size()") + ") selects last argument",
                selVargs.sget() == selVargs.size() &&
                selVargs.getsel() == "-xyz");
 
     selVargs.smov(0);
-    showResult(CYN("smov(0)") + " clears selector",
+    printResult(TU_CYN("smov(0)") + " clears selector",
                selVargs.sget() == 0);
+    EXPECT_NG(selVargs.smov(selVargs.size() + 1), TU_CYN("smov()") + " past end", std::out_of_range);
 
-    expectOutOfRange(CYN("smov()") + " past end",
-                     [&]() { selVargs.smov(selVargs.size() + 1); });
-
-    showResult("failed " + CYN("smov()") + " leaves selector unchanged",
+    printResult("failed " + TU_CYN("smov()") + " leaves selector unchanged",
                selVargs.sget() == 0);
 
     emptyVargs.smov(0);
-    showResult(CYN("smov(0)") + " valid on empty Vargs",
+    printResult(TU_CYN("smov(0)") + " valid on empty Vargs",
                emptyVargs.sget() == 0);
-
-    expectOutOfRange(CYN("smov(1)") + " on empty Vargs",
-                     [&]() { emptyVargs.smov(1); });
+    EXPECT_NG(emptyVargs.smov(1), TU_CYN("smov(1)") + " on empty Vargs", std::out_of_range);
 
     selVargs.smov(2);
     selVargs.sclr();
-    showResult(CYN("sclr()") + " resets selector",
+    printResult(TU_CYN("sclr()") + " resets selector",
                selVargs.sget() == 0);
 
     emptyVargs.sclr();
-    showResult(CYN("sclr()") + " valid on empty Vargs",
+    printResult(TU_CYN("sclr()") + " valid on empty Vargs",
                emptyVargs.sget() == 0);
 
 // ----------- SELECTOR MOVEMENT --------------------------------- //
-    heading("SELECTOR MOVEMENT: sadv(), sret()");
+    printHeading("SELECTOR MOVEMENT: sadv(), sret()");
 
     Vargs navVargs(testArgc, testArgv);
 
     navVargs.sadv();
-    showResult(CYN("sadv()") + " moves 0 -> 1",
+    printResult(TU_CYN("sadv()") + " moves 0 -> 1",
                navVargs.sget() == 1 &&
                navVargs.getsel() == "-b");
 
     navVargs.sadv();
-    showResult(CYN("sadv()") + " moves 1 -> 2",
+    printResult(TU_CYN("sadv()") + " moves 1 -> 2",
                navVargs.sget() == 2 &&
                navVargs.getsel() == "source/main.cpp");
 
     navVargs.sadv();
     navVargs.sadv();
-    showResult("repeated " + CYN("sadv()") + " reaches last argument",
+    printResult("repeated " + TU_CYN("sadv()") + " reaches last argument",
                navVargs.sget() == navVargs.size() &&
                navVargs.getsel() == "-xyz");
+    EXPECT_NG(navVargs.sadv(), TU_CYN("sadv()") + " past last argument", std::out_of_range);
 
-    expectOutOfRange(CYN("sadv()") + " past last argument",
-                     [&]() { navVargs.sadv(); });
-
-    showResult("failed " + CYN("sadv()") + " leaves selector unchanged",
+    printResult("failed " + TU_CYN("sadv()") + " leaves selector unchanged",
                navVargs.sget() == navVargs.size());
 
     navVargs.sret();
-    showResult(CYN("sret()") + " moves 4 -> 3",
+    printResult(TU_CYN("sret()") + " moves 4 -> 3",
                navVargs.sget() == 3 &&
                navVargs.getsel() == "name=hello world");
 
     navVargs.sret();
     navVargs.sret();
-    showResult("repeated " + CYN("sret()") + " reaches first argument",
+    printResult("repeated " + TU_CYN("sret()") + " reaches first argument",
                navVargs.sget() == 1 &&
                navVargs.getsel() == "-b");
+    EXPECT_NG(navVargs.sret(), TU_CYN("sret()") + " from first argument", std::out_of_range);
 
-    expectOutOfRange(CYN("sret()") + " from first argument",
-                     [&]() { navVargs.sret(); });
-
-    showResult("failed " + CYN("sret()") + " leaves selector unchanged",
+    printResult("failed " + TU_CYN("sret()") + " leaves selector unchanged",
                navVargs.sget() == 1);
 
     navVargs.sclr();
+    EXPECT_NG(navVargs.sret(), TU_CYN("sret()") + " from selector zero", std::out_of_range);
 
-    expectOutOfRange(CYN("sret()") + " from selector zero",
-                     [&]() { navVargs.sret(); });
-
-    showResult("failed " + CYN("sret()") + " from zero leaves selector zero",
+    printResult("failed " + TU_CYN("sret()") + " from zero leaves selector zero",
                navVargs.sget() == 0);
-
-    expectOutOfRange(CYN("sadv()") + " on empty Vargs",
-                     [&]() { emptyVargs.sadv(); });
-
-    expectOutOfRange(CYN("sret()") + " on empty Vargs",
-                     [&]() { emptyVargs.sret(); });
+    EXPECT_NG(emptyVargs.sadv(), TU_CYN("sadv()") + " on empty Vargs", std::out_of_range);
+    EXPECT_NG(emptyVargs.sret(), TU_CYN("sret()") + " on empty Vargs", std::out_of_range);
 
 // ----------- SELECTED ELEMENT ---------------------------------- //
-    heading("SELECTED ELEMENT: getsel(), setsel()");
+    printHeading("SELECTED ELEMENT: getsel(), setsel()");
 
     Vargs selectedVargs(testArgc, testArgv);
-
-    expectOutOfRange(CYN("getsel()") + " with selector zero",
-                     [&]() { selectedVargs.getsel(); });
-
-    expectOutOfRange(CYN("setsel()") + " with selector zero",
-                     [&]() { selectedVargs.setsel("should-not-set"); });
+    EXPECT_NG(selectedVargs.getsel(), TU_CYN("getsel()") + " with selector zero", std::out_of_range);
+    EXPECT_NG(selectedVargs.setsel("should-not-set"), TU_CYN("setsel()") + " with selector zero", std::out_of_range);
 
     selectedVargs.smov(1);
 
-    showResult(CYN("getsel()") + " returns first selected element",
+    printResult(TU_CYN("getsel()") + " returns first selected element",
                selectedVargs.getsel() == "-b");
 
     selectedVargs.setsel("changed-first");
 
-    showResult(CYN("setsel()") + " changes first selected element",
+    printResult(TU_CYN("setsel()") + " changes first selected element",
                selectedVargs.getsel() == "changed-first" &&
                selectedVargs.arg(1) == "changed-first" &&
                selectedVargs.sget() == 1);
@@ -304,7 +218,7 @@
     selectedVargs.smov(3);
     selectedVargs.setsel("changed-third");
 
-    showResult(CYN("setsel()") + " changes selected element only",
+    printResult(TU_CYN("setsel()") + " changes selected element only",
                selectedVargs.arg(1) == "changed-first" &&
                selectedVargs.arg(2) == "source/main.cpp" &&
                selectedVargs.arg(3) == "changed-third" &&
@@ -312,24 +226,20 @@
 
     selectedVargs.smov(selectedVargs.size());
 
-    showResult(CYN("getsel()") + " works on last element",
+    printResult(TU_CYN("getsel()") + " works on last element",
                selectedVargs.getsel() == "-xyz");
-
-    expectOutOfRange(CYN("getsel()") + " on empty Vargs",
-                     [&]() { emptyVargs.getsel(); });
-
-    expectOutOfRange(CYN("setsel()") + " on empty Vargs",
-                     [&]() { emptyVargs.setsel("x"); });
+    EXPECT_NG(emptyVargs.getsel(), TU_CYN("getsel()") + " on empty Vargs", std::out_of_range);
+    EXPECT_NG(emptyVargs.setsel("x"), TU_CYN("setsel()") + " on empty Vargs", std::out_of_range);
 
 // ----------- DIRECT INSERTION ---------------------------------- //
-    heading("DIRECT INSERTION: insel()");
+    printHeading("DIRECT INSERTION: insel()");
 
     Vargs insertZero(testArgc, testArgv);
     vector<string> beforeInsertZero = insertZero.getall();
 
     insertZero.insel("ignored");
 
-    showResult(CYN("insel()") + " with selector zero does nothing",
+    printResult(TU_CYN("insel()") + " with selector zero does nothing",
                insertZero.getall() == beforeInsertZero &&
                insertZero.sget() == 0);
 
@@ -337,9 +247,11 @@
     insertFirst.smov(1);
     insertFirst.insel("new-first");
 
-    showVargs("insertFirst", insertFirst);
+    printVariable("insertFirst.size()", insertFirst.size());
+    printVariable("insertFirst.sget()", insertFirst.sget());
+    printArray("insertFirst.getall()", insertFirst.getall());
 
-    showResult(CYN("insel()") + " at selector 1 inserts first",
+    printResult(TU_CYN("insel()") + " at selector 1 inserts first",
                insertFirst.size() == 5 &&
                insertFirst.sget() == 1 &&
                insertFirst.arg(1) == "new-first" &&
@@ -350,7 +262,7 @@
     insertMiddle.smov(3);
     insertMiddle.insel("new-third");
 
-    showResult(CYN("insel()") + " inserts at selected position",
+    printResult(TU_CYN("insel()") + " inserts at selected position",
                insertMiddle.size() == 5 &&
                insertMiddle.sget() == 3 &&
                insertMiddle.arg(2) == "source/main.cpp" &&
@@ -362,7 +274,7 @@
     insertLast.smov(insertLast.size());
     insertLast.insel("insert-at-four");
 
-    showResult(CYN("insel()") + " at last selector inserts at that position",
+    printResult(TU_CYN("insel()") + " at last selector inserts at that position",
                insertLast.size() == 5 &&
                insertLast.sget() == 4 &&
                insertLast.arg(4) == "insert-at-four" &&
@@ -372,19 +284,17 @@
     Vargs emptyInsert;
     emptyInsert.insel("ignored");
 
-    showResult(CYN("insel()") + " on empty Vargs does nothing",
+    printResult(TU_CYN("insel()") + " on empty Vargs does nothing",
                emptyInsert.size() == 0 &&
                emptyInsert.sget() == 0);
 
 // ----------- DIRECT DELETION ----------------------------------- //
-    heading("DIRECT DELETION: delsel()");
+    printHeading("DIRECT DELETION: delsel()");
 
     Vargs deleteVargs(testArgc, testArgv);
+    EXPECT_NG(deleteVargs.delsel(), TU_CYN("delsel()") + " with selector zero", std::out_of_range);
 
-    expectOutOfRange(CYN("delsel()") + " with selector zero",
-                     [&]() { deleteVargs.delsel(); });
-
-    showResult("failed " + CYN("delsel()") + " leaves object unchanged",
+    printResult("failed " + TU_CYN("delsel()") + " leaves object unchanged",
                deleteVargs.size() == 4 &&
                deleteVargs.sget() == 0 &&
                deleteVargs.arg(1) == "-b" &&
@@ -392,88 +302,81 @@
 
     deleteVargs.smov(2);
 
-    try {
+    EXPECT_OK(
+      {
       string deleted = deleteVargs.delsel();
 
-      showResult(CYN("delsel()") + " returns and deletes selected element",
+      printResult(TU_CYN("delsel()") + " returns and deletes selected element",
                  deleted == "source/main.cpp" &&
                  deleteVargs.size() == 3 &&
                  deleteVargs.arg(1) == "-b" &&
                  deleteVargs.arg(2) == "name=hello world" &&
                  deleteVargs.arg(3) == "-xyz");
 
-      showResult(CYN("delsel()") + " resets selector",
+      printResult(TU_CYN("delsel()") + " resets selector",
                  deleteVargs.sget() == 0);
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("delsel()") + " returns and deletes selected element", false);
-      showResult(CYN("delsel()") + " resets selector", false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("delsel()") + " completes without exception"
+    );
 
     Vargs deleteFirst(testArgc, testArgv);
     deleteFirst.smov(1);
 
-    try {
+    EXPECT_OK(
+      {
       string deleted = deleteFirst.delsel();
 
-      showResult(CYN("delsel()") + " deletes first element",
+      printResult(TU_CYN("delsel()") + " deletes first element",
                  deleted == "-b" &&
                  deleteFirst.size() == 3 &&
                  deleteFirst.arg(1) == "source/main.cpp" &&
                  deleteFirst.sget() == 0);
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("delsel()") + " deletes first element", false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("delsel()") + " completes without exception"
+    );
 
     Vargs deleteLast(testArgc, testArgv);
     deleteLast.smov(deleteLast.size());
 
-    try {
+    EXPECT_OK(
+      {
       string deleted = deleteLast.delsel();
 
-      showResult(CYN("delsel()") + " deletes last element",
+      printResult(TU_CYN("delsel()") + " deletes last element",
                  deleted == "-xyz" &&
                  deleteLast.size() == 3 &&
                  deleteLast.arg(3) == "name=hello world" &&
                  deleteLast.sget() == 0);
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("delsel()") + " deletes last element", false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("delsel()") + " completes without exception"
+    );
 
     Vargs singleDelete;
     singleDelete.push("only");
     singleDelete.smov(1);
 
-    try {
+    EXPECT_OK(
+      {
       string deleted = singleDelete.delsel();
 
-      showResult(CYN("delsel()") + " deletes sole element",
+      printResult(TU_CYN("delsel()") + " deletes sole element",
                  deleted == "only" &&
                  singleDelete.size() == 0 &&
                  singleDelete.sget() == 0);
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("delsel()") + " deletes sole element", false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("delsel()") + " completes without exception"
+    );
 
     Vargs emptyDelete;
-
-    expectOutOfRange(CYN("delsel()") + " on empty Vargs",
-                     [&]() { emptyDelete.delsel(); });
+    EXPECT_NG(emptyDelete.delsel(), TU_CYN("delsel()") + " on empty Vargs", std::out_of_range);
 
 // ----------- COPY OUT ------------------------------------------ //
-    heading("COPY OUT: getall()");
+    printHeading("COPY OUT: getall()");
 
     Vargs copyVargs(testArgc, testArgv);
     vector<string> copied = copyVargs.getall();
 
-    showResult(CYN("getall()") + " returns all arguments",
+    printResult(TU_CYN("getall()") + " returns all arguments",
                copied.size() == 4 &&
                copied[0] == "-b" &&
                copied[1] == "source/main.cpp" &&
@@ -482,22 +385,24 @@
 
     copied[0] = "modified-copy";
 
-    showResult("modifying " + CYN("getall()") + " result does not modify Vargs",
+    printResult("modifying " + TU_CYN("getall()") + " result does not modify Vargs",
                copyVargs.arg(1) == "-b");
 
-    showResult(CYN("getall()") + " on empty Vargs returns empty vector",
+    printResult(TU_CYN("getall()") + " on empty Vargs returns empty vector",
                emptyVargs.getall().empty());
 
 // ----------- PUSH ---------------------------------------------- //
-    heading("STACK-STYLE MODIFICATION: push()");
+    printHeading("STACK-STYLE MODIFICATION: push()");
 
     Vargs pushVargs;
 
     pushVargs.push("one");
 
-    showVargs("after push(\"one\")", pushVargs);
+    printVariable("pushVargs.size()", pushVargs.size());
+    printVariable("pushVargs.sget()", pushVargs.sget());
+    printArray("pushVargs.getall()", pushVargs.getall());
 
-    showResult(CYN("push()") + " into empty Vargs",
+    printResult(TU_CYN("push()") + " into empty Vargs",
                pushVargs.size() == 1 &&
                pushVargs.arg(1) == "one" &&
                pushVargs.sget() == 0);
@@ -505,7 +410,7 @@
     pushVargs.smov(1);
     pushVargs.push("two");
 
-    showResult(CYN("push()") + " preserves existing selector",
+    printResult(TU_CYN("push()") + " preserves existing selector",
                pushVargs.size() == 2 &&
                pushVargs.sget() == 1 &&
                pushVargs.getsel() == "one" &&
@@ -513,7 +418,7 @@
 
     pushVargs.push("three");
 
-    showResult("repeated " + CYN("push()") + " appends in order",
+    printResult("repeated " + TU_CYN("push()") + " appends in order",
                pushVargs.size() == 3 &&
                pushVargs.sget() == 1 &&
                pushVargs.arg(1) == "one" &&
@@ -521,7 +426,7 @@
                pushVargs.arg(3) == "three");
 
 // ----------- POP ----------------------------------------------- //
-    heading("STACK-STYLE MODIFICATION: pop()");
+    printHeading("STACK-STYLE MODIFICATION: pop()");
 
     Vargs popUnselected;
     popUnselected.push("one");
@@ -529,24 +434,21 @@
     popUnselected.push("three");
     popUnselected.smov(1);
 
-    try {
+    EXPECT_OK(
+      {
       string popped = popUnselected.pop();
 
-      showResult(CYN("pop()") + " removes and returns last argument",
+      printResult(TU_CYN("pop()") + " removes and returns last argument",
                  popped == "three" &&
                  popUnselected.size() == 2 &&
                  popUnselected.arg(2) == "two");
 
-      showResult(CYN("pop()") + " preserves selector if selected element remains",
+      printResult(TU_CYN("pop()") + " preserves selector if selected element remains",
                  popUnselected.sget() == 1 &&
                  popUnselected.getsel() == "one");
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("pop()") + " removes and returns last argument", false);
-      showResult(CYN("pop()") + " preserves selector if selected element remains",
-                 false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("pop()") + " completes without exception"
+    );
 
     Vargs popSelected;
     popSelected.push("one");
@@ -554,74 +456,68 @@
     popSelected.push("three");
     popSelected.smov(3);
 
-    try {
+    EXPECT_OK(
+      {
       string popped = popSelected.pop();
 
-      showResult(CYN("pop()") + " of selected last element decrements selector",
+      printResult(TU_CYN("pop()") + " of selected last element decrements selector",
                  popped == "three" &&
                  popSelected.size() == 2 &&
                  popSelected.sget() == 2 &&
                  popSelected.getsel() == "two");
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("pop()") + " of selected last element decrements selector",
-                 false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("pop()") + " completes without exception"
+    );
 
     Vargs popNull;
     popNull.push("one");
     popNull.push("two");
 
-    try {
+    EXPECT_OK(
+      {
       popNull.pop();
 
-      showResult(CYN("pop()") + " preserves null selector",
+      printResult(TU_CYN("pop()") + " preserves null selector",
                  popNull.size() == 1 &&
                  popNull.sget() == 0);
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("pop()") + " preserves null selector", false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("pop()") + " completes without exception"
+    );
 
     Vargs popSingle;
     popSingle.push("only");
     popSingle.smov(1);
 
-    try {
+    EXPECT_OK(
+      {
       string popped = popSingle.pop();
 
-      showResult(CYN("pop()") + " selected sole element => selector zero",
+      printResult(TU_CYN("pop()") + " selected sole element => selector zero",
                  popped == "only" &&
                  popSingle.size() == 0 &&
                  popSingle.sget() == 0);
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("pop()") + " selected sole element => selector zero", false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("pop()") + " completes without exception"
+    );
 
     Vargs emptyBack;
-
-    expectOutOfRange(CYN("pop()") + " on empty Vargs",
-                     [&]() { emptyBack.pop(); });
+    EXPECT_NG(emptyBack.pop(), TU_CYN("pop()") + " on empty Vargs", std::out_of_range);
 
 // ----------- FPUSH --------------------------------------------- //
-    heading("STACK-STYLE MODIFICATION: fpush()");
+    printHeading("STACK-STYLE MODIFICATION: fpush()");
 
     Vargs fpushVargs;
 
     fpushVargs.fpush("one");
 
-    showResult(CYN("fpush()") + " into empty Vargs",
+    printResult(TU_CYN("fpush()") + " into empty Vargs",
                fpushVargs.size() == 1 &&
                fpushVargs.arg(1) == "one" &&
                fpushVargs.sget() == 0);
 
     fpushVargs.fpush("zero");
 
-    showResult(CYN("fpush()") + " inserts at front with null selector",
+    printResult(TU_CYN("fpush()") + " inserts at front with null selector",
                fpushVargs.size() == 2 &&
                fpushVargs.arg(1) == "zero" &&
                fpushVargs.arg(2) == "one" &&
@@ -635,9 +531,11 @@
 
     fpushSelected.fpush("zero");
 
-    showVargs("fpushSelected", fpushSelected);
+    printVariable("fpushSelected.size()", fpushSelected.size());
+    printVariable("fpushSelected.sget()", fpushSelected.sget());
+    printArray("fpushSelected.getall()", fpushSelected.getall());
 
-    showResult(CYN("fpush()") + " increments nonzero selector",
+    printResult(TU_CYN("fpush()") + " increments nonzero selector",
                fpushSelected.size() == 4 &&
                fpushSelected.sget() == 3 &&
                fpushSelected.getsel() == "two" &&
@@ -649,34 +547,32 @@
     fpushFirst.smov(1);
     fpushFirst.fpush("zero");
 
-    showResult(CYN("fpush()") + " preserves selected element at first position",
+    printResult(TU_CYN("fpush()") + " preserves selected element at first position",
                fpushFirst.sget() == 2 &&
                fpushFirst.getsel() == "one");
 
 // ----------- FPOP ---------------------------------------------- //
-    heading("STACK-STYLE MODIFICATION: fpop()");
+    printHeading("STACK-STYLE MODIFICATION: fpop()");
 
     Vargs fpopNull;
     fpopNull.push("zero");
     fpopNull.push("one");
     fpopNull.push("two");
 
-    try {
+    EXPECT_OK(
+      {
       string popped = fpopNull.fpop();
 
-      showResult(CYN("fpop()") + " removes and returns first argument",
+      printResult(TU_CYN("fpop()") + " removes and returns first argument",
                  popped == "zero" &&
                  fpopNull.size() == 2 &&
                  fpopNull.arg(1) == "one");
 
-      showResult(CYN("fpop()") + " preserves null selector",
+      printResult(TU_CYN("fpop()") + " preserves null selector",
                  fpopNull.sget() == 0);
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("fpop()") + " removes and returns first argument", false);
-      showResult(CYN("fpop()") + " preserves null selector", false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("fpop()") + " completes without exception"
+    );
 
     Vargs fpopMiddle;
     fpopMiddle.push("zero");
@@ -684,69 +580,57 @@
     fpopMiddle.push("two");
     fpopMiddle.smov(2);
 
-    try {
+    EXPECT_OK(
+      {
       string popped = fpopMiddle.fpop();
 
-      showResult(CYN("fpop()") + " decrements selector to preserve element",
+      printResult(TU_CYN("fpop()") + " decrements selector to preserve element",
                  popped == "zero" &&
                  fpopMiddle.size() == 2 &&
                  fpopMiddle.sget() == 1 &&
                  fpopMiddle.getsel() == "one");
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("fpop()") + " decrements selector to preserve element", false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("fpop()") + " completes without exception"
+    );
 
     Vargs fpopSelectedFirst;
     fpopSelectedFirst.push("zero");
     fpopSelectedFirst.push("one");
     fpopSelectedFirst.smov(1);
 
-    try {
+    EXPECT_OK(
+      {
       string popped = fpopSelectedFirst.fpop();
 
-      showResult(CYN("fpop()") + " selected first element => selector zero",
+      printResult(TU_CYN("fpop()") + " selected first element => selector zero",
                  popped == "zero" &&
                  fpopSelectedFirst.size() == 1 &&
                  fpopSelectedFirst.sget() == 0 &&
                  fpopSelectedFirst.arg(1) == "one");
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("fpop()") + " selected first element => selector zero", false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("fpop()") + " completes without exception"
+    );
 
     Vargs fpopSingle;
     fpopSingle.push("only");
     fpopSingle.smov(1);
 
-    try {
+    EXPECT_OK(
+      {
       string popped = fpopSingle.fpop();
 
-      showResult(CYN("fpop()") + " selected sole element => selector zero",
+      printResult(TU_CYN("fpop()") + " selected sole element => selector zero",
                  popped == "only" &&
                  fpopSingle.size() == 0 &&
                  fpopSingle.sget() == 0);
-    }
-    catch (const std::exception& err) {
-      showResult(CYN("fpop()") + " selected sole element => selector zero", false);
-      cout << "       unexpected exception: " << err.what() << '\n';
-    }
+      },
+      TU_CYN("fpop()") + " completes without exception"
+    );
 
     Vargs emptyFront;
+    EXPECT_NG(emptyFront.fpop(), TU_CYN("fpop()") + " on empty Vargs", std::out_of_range);
 
-    expectOutOfRange(CYN("fpop()") + " on empty Vargs",
-                     [&]() { emptyFront.fpop(); });
-
-// ----------- TEST SUMMARY -------------------------------------- //
-    heading("TEST SUMMARY");
-
-    cout << "Passed: " << testsPassed << '\n';
-    cout << "Failed: " << testsFailed << '\n';
-    cout << "Total:  " << testsPassed + testsFailed << '\n';
-
-    return testsFailed == 0 ? 0 : 1;
+    return 0;
   }
 
 //+++++++++++ EOF ++++++++++++++++++++++++++++++++++++++++++++++++ //

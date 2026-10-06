@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -Wall -Wextra -std=c++17
 
-test_Vargs: Vargs.hpp test_Vargs.cpp
+test_Vargs: Vargs.hpp test_Vargs.cpp testutils/testutils.h
 	g++ $(CXXFLAGS) test_Vargs.cpp -o test_Vargs
 
 #test_Vargs.o: test_Vargs.cpp Vargs.hpp

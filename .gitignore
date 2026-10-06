@@ -6,3 +6,6 @@ test_Vargs
 
 # Windows metadata
 *:Zone.Identifier
+
+# .old files
+*.old
