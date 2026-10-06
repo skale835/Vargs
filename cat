@@ -1,0 +1,16 @@
+diff --git a/.gitmodules b/.gitmodules
+new file mode 100644
+index 0000000..5f68f9b
+--- /dev/null
++++ b/.gitmodules
+@@ -0,0 +1,3 @@
++[submodule "testutils"]
++	path = testutils
++	url = https://github.com/skale835/testutils.git
+diff --git a/testutils b/testutils
+new file mode 160000
+index 0000000..ff6653c
+--- /dev/null
++++ b/testutils
+@@ -0,0 +1 @@
++Subproject commit ff6653c6bd894f3f6e7c6ab9886e9c797e1e766c
